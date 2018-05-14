@@ -1,0 +1,18 @@
+[package]
+name = "game_player"
+version = "0.1.0"
+authors = ["Philip Nygard <oozekip@gmail.com>"]
+
+[lib]
+name = "games"
+path = "src/lib.rs"
+
+
+[dependencies]
+
+glutin = "0.15"
+gl = "0.10"
+
+[dependencies.nanovg]
+version = "0.4"
+features = ["gl3"]
