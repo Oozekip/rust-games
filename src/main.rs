@@ -36,21 +36,24 @@ fn main() {
         gl::ClearColor(0.0, 0.0, 0.0, 1.0);
     }
 
-    events_loop.run_forever(|event| {
-        match event {
-            glutin::Event::WindowEvent { event, .. } => match event {
-                glutin::WindowEvent::CloseRequested => return glutin::ControlFlow::Break,
-                glutin::WindowEvent::Resized(w, h) => {
-                    gl_window.resize(w, h);
-                    width = w;
-                    height = h;
+    let mut running = true;
+
+    while running {
+        events_loop.poll_events(|event| {
+            if let glutin::Event::WindowEvent { event, .. } = event {
+                match event {
+                    glutin::WindowEvent::CloseRequested => running = false,
+                    glutin::WindowEvent::Resized(w, h) => {
+                        gl_window.resize(w, h);
+                        width = w;
+                        height = h;
+                    }
+                    _ => (),
                 }
-                _ => (),
-            },
-            _ => {
-                ttt.handle_event(&event);
+
+                ttt.handle_event(&event)
             }
-        }
+        });
 
         // Set viewport and clear
         unsafe {
@@ -60,7 +63,6 @@ fn main() {
 
         ttt.draw(&context, &gl_window);
 
-        let _ = gl_window.swap_buffers();
-        glutin::ControlFlow::Continue
-    });
+        gl_window.swap_buffers().unwrap();
+    }
 }
