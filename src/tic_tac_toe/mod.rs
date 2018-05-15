@@ -1,5 +1,7 @@
 use super::Game;
 
+use std::fmt;
+
 use glutin::{ElementState, GlWindow, MouseButton, WindowEvent};
 use nanovg;
 use nanovg::{Color, Frame, StrokeOptions};
@@ -7,8 +9,6 @@ use nanovg::{Color, Frame, StrokeOptions};
 pub const BOARD_WIDTH: usize = 3;
 pub const BOARD_HEIGHT: usize = 3;
 pub const BOARD_SIZE: usize = BOARD_WIDTH * BOARD_HEIGHT;
-
-pub const DRAW_SIZE: f32 = 600.0;
 
 pub fn board_color() -> Color {
     Color::new(1.0, 1.0, 1.0, 1.0)
@@ -80,33 +80,32 @@ impl TicTacToe {
             cursor_pos: (0, 0),
             screen_size: (0, 0),
             state: GameState::Running(SquareState::X),
-            board: Default::default()
+            board: Default::default(),
         }
     }
 
-    pub fn reset_game(&mut self){
+    pub fn reset_game(&mut self) {
         self.board = Default::default();
         self.state = GameState::Running(SquareState::X);
     }
 
-    fn play_turn(&mut self, clicked: (usize, usize)){
+    fn play_turn(&mut self, clicked: (usize, usize)) {
         match self.state {
             GameState::GameOver(..) => self.reset_game(), // Reset the game
-            GameState::Running(turn) => {                 // Play a turn
+            GameState::Running(turn) => {
+                // Play a turn
                 if let SquareState::Empty = self.board.get_tile(clicked) {
                     self.board.set_tile(clicked, turn);
 
                     if let Some(winner) = self.board.check_winner() {
                         self.state = GameState::GameOver(winner);
-                    }
-                    else if let SquareState::X = turn {
+                    } else if let SquareState::X = turn {
                         self.state = GameState::Running(SquareState::O);
-                    }
-                    else {
+                    } else {
                         self.state = GameState::Running(SquareState::X);
                     }
                 }
-            },
+            }
         }
     }
 }
@@ -154,14 +153,15 @@ impl Game for TicTacToe {
             draw_size / self.board.height() as f32,
         );
 
+        window.set_title(&format!("{}", self.state).as_str());
         let (board_color, x_color, o_color) = match self.state {
             GameState::GameOver(winner) => match winner {
                 Some(winner) => match winner {
                     SquareState::X => (x_color(), x_color(), x_color()),
                     _ => (o_color(), o_color(), o_color()),
-                }
+                },
                 _ => (draw_color(), draw_color(), draw_color()),
-            }
+            },
 
             _ => (board_color(), x_color(), o_color()),
         };
@@ -189,7 +189,9 @@ impl Game for TicTacToe {
                         );
                         let dim = (tile_size.0 * 0.75, tile_size.1 * 0.75);
 
-                        self.board.get_tile((x, y)).draw(&frame, center, dim, 12.0, x_color, o_color);
+                        self.board
+                            .get_tile((x, y))
+                            .draw(&frame, center, dim, 12.0, x_color, o_color);
                     }
                 }
             },
@@ -204,8 +206,28 @@ enum SquareState {
     O,
 }
 
+impl fmt::Display for SquareState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let character = match self {
+            SquareState::X => 'X',
+            SquareState::O => 'O',
+            _ => '_',
+        };
+
+        write!(f, "{}", character)
+    }
+}
+
 impl SquareState {
-    pub fn draw(self, frame: &Frame, center: (f32, f32), (width, height): (f32, f32), stroke: f32, x_color: Color, o_color: Color) {
+    pub fn draw(
+        self,
+        frame: &Frame,
+        center: (f32, f32),
+        (width, height): (f32, f32),
+        stroke: f32,
+        x_color: Color,
+        o_color: Color,
+    ) {
         match self {
             // Draw O
             SquareState::O => {
@@ -309,17 +331,17 @@ impl Board {
         self.tiles[x * BOARD_HEIGHT + y] = state;
     }
 
-    pub fn check_winner(&self) -> Option<Option<SquareState>>{
+    pub fn check_winner(&self) -> Option<Option<SquareState>> {
         let mut rows = [0; BOARD_WIDTH];
         let mut cols = [0; BOARD_HEIGHT];
         let mut right_diag = 0;
         let mut left_diag = 0;
         let mut filled = 0;
 
-        for x in 0..rows.len(){
-            for y in 0..cols.len(){
+        for x in 0..rows.len() {
+            for y in 0..cols.len() {
                 // Convert state to value
-                let tile = match self.get_tile((x, y)){
+                let tile = match self.get_tile((x, y)) {
                     SquareState::X => 1,
                     SquareState::O => -1,
                     _ => 0,
@@ -341,16 +363,14 @@ impl Board {
                 }
 
                 filled += i32::abs(tile);
-
             }
         }
 
-        let abs_max = |acc, &x|{
+        let abs_max = |acc, &x| {
             if i32::abs(x) > i32::abs(acc) {
                 x
-            }
-            else {
-               acc
+            } else {
+                acc
             }
         };
 
@@ -360,15 +380,28 @@ impl Board {
         lead = abs_max(lead, &right_diag);
 
         match (lead, filled) {
-            (3, _)  => Some(Some(SquareState::X)),
+            (3, _) => Some(Some(SquareState::X)),
             (-3, _) => Some(Some(SquareState::O)),
-            (_, 9)  => Some(None),
-            _       => None,
+            (_, 9) => Some(None),
+            _ => None,
         }
     }
 }
 
 enum GameState {
-    GameOver(Option<SquareState>),  // Who won the game (tie if None)
-    Running(SquareState),           // Whose turn it is
+    GameOver(Option<SquareState>), // Who won the game (tie if None)
+    Running(SquareState),          // Whose turn it is
+}
+
+impl fmt::Display for GameState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            GameState::Running(state) => write!(f, "{}'s turn", state),
+            GameState::GameOver(winner) => if let Some(winner) = winner {
+                write!(f, "{} wins", winner)
+            } else {
+                write!(f, "Draw")
+            },
+        }
+    }
 }
