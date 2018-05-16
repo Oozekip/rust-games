@@ -13,26 +13,36 @@ use self::board::Board;
 use self::state::GameState;
 use self::tile::Tile;
 
+/// Stroke width used to draw the lines of the board
 pub const BOARD_STROKE: f32 = 3.0;
+
+/// Stroke width used to draw the tiles
 pub const TILE_STROKE: f32 = 12.0;
+
+/// Percentage of space each tile uses on the board
 pub const TILE_SIZE_RATIO: f32 = 0.75;
 
+/// Color used to draw the lines of the board
 pub fn board_color() -> Color {
     Color::new(1.0, 1.0, 1.0, 1.0)
 }
 
+/// Color used to draw Xs
 pub fn x_color() -> Color {
     Color::new(0.0, 0.0, 1.0, 1.0)
 }
 
+/// Color used to draw Os
 pub fn o_color() -> Color {
     Color::new(1.0, 0.0, 0.0, 1.0)
 }
 
+/// Color used when the game results in a tie
 pub fn draw_color() -> Color {
     Color::new(0.75, 0.75, 0.75, 1.0)
 }
 
+/// Struct used for running th Tic-tac-toe game
 pub struct TicTacToe {
     board: Board,
     cursor_pos: (u32, u32),
