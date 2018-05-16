@@ -1,10 +1,10 @@
 use std::fmt;
 
-use super::tile::SquareState;
+use super::tile::Tile;
 
 pub enum GameState {
-    GameOver(Option<SquareState>), // Who won the game (tie if None)
-    Running(SquareState),          // Whose turn it is
+    GameOver(Option<Tile>), // Who won the game (tie if None)
+    Running(Tile),          // Whose turn it is
 }
 
 impl fmt::Display for GameState {

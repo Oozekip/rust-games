@@ -2,16 +2,16 @@ use super::Game;
 
 use glutin::{ElementState, GlWindow, MouseButton, WindowEvent};
 use nanovg;
-use nanovg::{Color, Frame};
+use nanovg::Color;
 
 mod board;
+mod state;
 mod tile;
 mod utils;
-mod state;
 
-use self::tile::SquareState;
 use self::board::Board;
 use self::state::GameState;
+use self::tile::Tile;
 
 pub fn board_color() -> Color {
     Color::new(1.0, 1.0, 1.0, 1.0)
@@ -29,30 +29,6 @@ pub fn draw_color() -> Color {
     Color::new(0.75, 0.75, 0.75, 1.0)
 }
 
-fn draw_board(
-    frame: &Frame,
-    (rows, cols): (usize, usize),
-    (x, y): (f32, f32),
-    (width, height): (f32, f32),
-    color: Color,
-    stroke: f32,
-) {
-    let tile_size = (width / rows as f32, height / cols as f32);
-    // Horizontal lines
-    for i in 0..=rows {
-        let origin = (x + tile_size.0 * i as f32, y);
-        let end = (origin.0, origin.1 + height);
-        utils::draw_line(&frame, origin, end, color, stroke);
-    }
-
-    // Vertical lines
-    for i in 0..=cols {
-        let origin = (x, y + tile_size.1 * i as f32);
-        let end = (origin.0 + width, origin.1);
-        utils::draw_line(&frame, origin, end, color, stroke);
-    }
-}
-
 pub struct TicTacToe {
     board: Board,
     cursor_pos: (u32, u32),
@@ -65,14 +41,14 @@ impl TicTacToe {
         TicTacToe {
             cursor_pos: (0, 0),
             screen_size: (0, 0),
-            state: GameState::Running(SquareState::X),
+            state: GameState::Running(Tile::X),
             board: Default::default(),
         }
     }
 
     pub fn reset_game(&mut self) {
         self.board = Default::default();
-        self.state = GameState::Running(SquareState::X);
+        self.state = GameState::Running(Tile::X);
     }
 
     fn play_turn(&mut self, clicked: (usize, usize)) {
@@ -80,15 +56,15 @@ impl TicTacToe {
             GameState::GameOver(..) => self.reset_game(), // Reset the game
             GameState::Running(turn) => {
                 // Play a turn
-                if let SquareState::Empty = self.board.get_tile(clicked) {
+                if let Tile::Empty = self.board.get_tile(clicked) {
                     self.board.set_tile(clicked, turn);
 
                     if let Some(winner) = self.board.check_winner() {
                         self.state = GameState::GameOver(winner);
-                    } else if let SquareState::X = turn {
-                        self.state = GameState::Running(SquareState::O);
+                    } else if let Tile::X = turn {
+                        self.state = GameState::Running(Tile::O);
                     } else {
-                        self.state = GameState::Running(SquareState::X);
+                        self.state = GameState::Running(Tile::X);
                     }
                 }
             }
@@ -131,19 +107,12 @@ impl Game for TicTacToe {
 
     fn draw(&self, context: &Self::ContextType, window: &Self::WindowType) {
         let (width, height) = self.screen_size;
-        let pos_int = self.board.screen_pos((width as u32, height as u32));
-        let pos = (pos_int.0 as f32, pos_int.1 as f32);
-        let draw_size = u32::min(width, height) as f32;
-        let tile_size = (
-            draw_size / self.board.width() as f32,
-            draw_size / self.board.height() as f32,
-        );
 
         window.set_title(&format!("{}", self.state).as_str());
         let (board_color, x_color, o_color) = match self.state {
             GameState::GameOver(winner) => match winner {
                 Some(winner) => match winner {
-                    SquareState::X => (x_color(), x_color(), x_color()),
+                    Tile::X => (x_color(), x_color(), x_color()),
                     _ => (o_color(), o_color(), o_color()),
                 },
                 _ => (draw_color(), draw_color(), draw_color()),
@@ -157,29 +126,10 @@ impl Game for TicTacToe {
             (width as i32, height as i32),
             window.hidpi_factor(),
             |frame| {
-                draw_board(
-                    &frame,
-                    (self.board.width(), self.board.height()),
-                    pos,
-                    (draw_size, draw_size),
-                    board_color,
-                    3.0,
-                );
-
-                // Draw tiles
-                for x in 0..self.board.width() {
-                    for y in 0..self.board.height() {
-                        let center = (
-                            x as f32 * tile_size.0 + pos.0 + (tile_size.0 / 2.0),
-                            y as f32 * tile_size.1 + pos.1 + (tile_size.1 / 2.0),
-                        );
-                        let dim = (tile_size.0 * 0.75, tile_size.1 * 0.75);
-
-                        self.board
-                            .get_tile((x, y))
-                            .draw(&frame, center, dim, 12.0, x_color, o_color);
-                    }
-                }
+                self.board
+                    .draw_board(&frame, self.screen_size, board_color, 3.0);
+                self.board
+                    .draw_tiles(&frame, self.screen_size, 0.75, x_color, o_color, 12.0);
             },
         );
     }

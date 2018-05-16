@@ -1,19 +1,19 @@
-use std::fmt;
-use nanovg::{Color, Frame, StrokeOptions};
 use super::utils;
+use nanovg::{Color, Frame, StrokeOptions};
+use std::fmt;
 
 #[derive(Clone, Copy)]
-pub enum SquareState {
+pub enum Tile {
     Empty,
     X,
     O,
 }
 
-impl fmt::Display for SquareState {
+impl fmt::Display for Tile {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let character = match self {
-            SquareState::X => 'X',
-            SquareState::O => 'O',
+            Tile::X => 'X',
+            Tile::O => 'O',
             _ => '_',
         };
 
@@ -21,7 +21,7 @@ impl fmt::Display for SquareState {
     }
 }
 
-impl SquareState {
+impl Tile {
     pub fn draw(
         self,
         frame: &Frame,
@@ -33,7 +33,7 @@ impl SquareState {
     ) {
         match self {
             // Draw O
-            SquareState::O => {
+            Tile::O => {
                 frame.path(
                     |path| {
                         path.ellipse(center, width / 2.0, height / 2.0);
@@ -50,7 +50,7 @@ impl SquareState {
             }
 
             // Draw X
-            SquareState::X => {
+            Tile::X => {
                 let top_left = (center.0 - width / 2.0, center.1 - height / 2.0);
                 let bottom_left = (center.0 - width / 2.0, center.1 + height / 2.0);
                 let top_right = (center.0 + width / 2.0, center.1 - height / 2.0);
