@@ -13,6 +13,10 @@ use self::board::Board;
 use self::state::GameState;
 use self::tile::Tile;
 
+pub const BOARD_STROKE: f32 = 3.0;
+pub const TILE_STROKE: f32 = 12.0;
+pub const TILE_SIZE_RATIO: f32 = 0.75;
+
 pub fn board_color() -> Color {
     Color::new(1.0, 1.0, 1.0, 1.0)
 }
@@ -127,9 +131,15 @@ impl Game for TicTacToe {
             window.hidpi_factor(),
             |frame| {
                 self.board
-                    .draw_board(&frame, self.screen_size, board_color, 3.0);
-                self.board
-                    .draw_tiles(&frame, self.screen_size, 0.75, x_color, o_color, 12.0);
+                    .draw_board(&frame, self.screen_size, board_color, BOARD_STROKE);
+                self.board.draw_tiles(
+                    &frame,
+                    self.screen_size,
+                    TILE_SIZE_RATIO,
+                    x_color,
+                    o_color,
+                    TILE_STROKE,
+                );
             },
         );
     }
